@@ -94,6 +94,7 @@ steps:
 | --- | --- |
 | Runners | Use GitHub-hosted runners. npm trusted publishing does not accept self-hosted ones. |
 | Tools | The action uses `bash`, `curl` and `jq`. GitHub-hosted runners have all three. |
+| HTTP 404 | npm answers 404 when the package is missing. It also answers 404 when no trusted publisher on it matches the run. |
 | `npm publish --dry-run` | It makes the exchange too. But a failed exchange is only a verbose log line. The dry run still succeeds. |
 
 > [!WARNING]

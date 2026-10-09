@@ -97,6 +97,11 @@ for pkg in "${packages[@]}"; do
     # A failed exchange carries no token, so the body is safe to show.
     message="$(jq -r '.message // empty' "$body" 2>/dev/null || true)"
     [[ -n "$message" ]] || message="$(head -c 300 "$body")"
+    # npm answers 404 for a package that exists but trusts no publisher
+    # matching this run, so the name alone is not the only suspect.
+    if [[ "$code" == 404 ]]; then
+      message="${message} (the name is wrong, or no trusted publisher on it matches ${workflow_ref%%@*})"
+    fi
     echo "::error::${pkg}: HTTP ${code}: ${message}"
     echo "| \`${pkg}\` | ❌ HTTP ${code}: ${message} |" >>"$GITHUB_STEP_SUMMARY"
     failed=1
