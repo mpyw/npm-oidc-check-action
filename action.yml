@@ -1,7 +1,7 @@
 name: 'npm OIDC check'
 description: >-
-  Check that npm trusted publishing accepts this workflow. Exchanges the GitHub
-  OIDC token for an npm token per package, and publishes nothing.
+  Check that npm trusted publishing accepts this workflow by exchanging the
+  OIDC token for npm tokens. Publishes nothing.
 author: mpyw
 
 branding:
