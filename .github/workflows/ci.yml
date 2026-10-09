@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: actionlint
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+      - name: shellcheck
+        run: shellcheck check.sh
+
+  # A passing check needs a package whose trusted publisher names this
+  # repository, so these jobs cover the ways the action must fail.
+  self-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The package exists, and no trusted publisher on it names this repository.
+      - id: untrusted
+        continue-on-error: true
+        uses: ./
+        with:
+          packages: '@mpyw/suve'
+
+      - id: missing
+        continue-on-error: true
+        uses: ./
+        with:
+          packages: '@mpyw/npm-oidc-check-action-no-such-package'
+
+      - id: bad-name
+        continue-on-error: true
+        uses: ./
+        with:
+          packages: 'not/a/valid name'
+
+      - name: Expect each check to fail
+        shell: bash
+        env:
+          UNTRUSTED: ${{ steps.untrusted.outcome }}
+          MISSING: ${{ steps.missing.outcome }}
+          BAD_NAME: ${{ steps.bad-name.outcome }}
+          WORKFLOW_REF: ${{ steps.untrusted.outputs.workflow-ref }}
+        run: |
+          set -euo pipefail
+          [[ "$UNTRUSTED" == failure ]] || { echo "untrusted: $UNTRUSTED"; exit 1; }
+          [[ "$MISSING" == failure ]] || { echo "missing: $MISSING"; exit 1; }
+          [[ "$BAD_NAME" == failure ]] || { echo "bad-name: $BAD_NAME"; exit 1; }
+          [[ "$WORKFLOW_REF" == */.github/workflows/ci.yml@* ]] || { echo "workflow-ref: $WORKFLOW_REF"; exit 1; }
+
+  no-permission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: check
+        continue-on-error: true
+        uses: ./
+        with:
+          packages: '@mpyw/suve'
+      - name: Expect the check to fail
+        env:
+          OUTCOME: ${{ steps.check.outcome }}
+        run: '[[ "$OUTCOME" == failure ]]'

@@ -1,0 +1,37 @@
+name: 'npm OIDC check'
+description: >-
+  Check that npm trusted publishing accepts this workflow. Exchanges the GitHub
+  OIDC token for an npm token per package, and publishes nothing.
+author: mpyw
+
+branding:
+  icon: check-circle
+  color: green
+
+inputs:
+  packages:
+    description: >-
+      Package names to check, separated by newlines, spaces or commas.
+    required: true
+  registry:
+    description: 'Registry URL.'
+    required: false
+    default: 'https://registry.npmjs.org'
+
+outputs:
+  workflow-ref:
+    description: >-
+      The workflow_ref claim of the OIDC token. npm matches its filename
+      against the trusted publisher.
+    value: ${{ steps.check.outputs.workflow-ref }}
+
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      # Inputs go through the environment, never into the script text.
+      env:
+        INPUT_PACKAGES: ${{ inputs.packages }}
+        INPUT_REGISTRY: ${{ inputs.registry }}
+      run: bash "${GITHUB_ACTION_PATH}/check.sh"
