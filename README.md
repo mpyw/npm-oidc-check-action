@@ -74,6 +74,15 @@ gh workflow run release.yml -f check_only=true
 > [!TIP]
 > Jobs that `need` a skipped job are skipped too. So one `if` on the first job usually skips the whole release.
 
+## Validate a new trusted publisher
+
+npm shows a new trusted publisher as "Pending validation". It [expires after 48 hours](https://github.blog/changelog/2026-10-02-unvalidated-npm-trusted-publishing-configurations-now-expire/) unless it is validated. An expired one can no longer publish. To fix it, you delete it and create it again.
+
+A successful token exchange validates it. A publish is not needed. So after you add a trusted publisher, run the check once from that workflow. The status then changes to "Valid".
+
+> [!NOTE]
+> npm documents only the first publish as the way to validate. The exchange is what we observed on several packages in October 2026.
+
 ## Check before publishing
 
 Some projects publish several packages in one run. A wrong trusted publisher can stop that run halfway. Put the check in front of the publish, and the run stops before anything is published.
